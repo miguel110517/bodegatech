@@ -13,6 +13,7 @@ export async function createProduct(formData: FormData) {
 
   const costPrice = Number(formData.get("costPrice"));
   const salePrice = Number(formData.get("salePrice"));
+
   const offerPrice = formData.get("offerPrice")
     ? Number(formData.get("offerPrice"))
     : null;
@@ -20,13 +21,35 @@ export async function createProduct(formData: FormData) {
   const stock = Number(formData.get("stock"));
   const minStock = Number(formData.get("minStock"));
 
-  const location = formData.get("location")?.toString().trim();
+  const location =
+    formData.get("location")?.toString().trim() || null;
 
-  const categoryId = formData.get("categoryId")?.toString();
+  const categoryId =
+    formData.get("categoryId")?.toString();
 
   if (!name || !categoryId) return;
 
-  const code = `BTI-${Date.now()}`;
+  const productos = await prisma.product.findMany({
+    select: {
+      code: true,
+    },
+  });
+
+  let mayorNumero = 0;
+
+  for (const producto of productos) {
+    if (!producto.code?.startsWith("BTI-")) continue;
+
+    const numero = parseInt(
+      producto.code.replace("BTI-", "")
+    );
+
+    if (!isNaN(numero) && numero > mayorNumero) {
+      mayorNumero = numero;
+    }
+  }
+
+  const code = `BTI-${String(mayorNumero + 1).padStart(4, "0")}`;
 
   await prisma.product.create({
     data: {
@@ -46,4 +69,5 @@ export async function createProduct(formData: FormData) {
   });
 
   revalidatePath("/productos");
+  revalidatePath("/");
 }
