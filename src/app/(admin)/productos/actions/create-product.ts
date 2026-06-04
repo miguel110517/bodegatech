@@ -26,9 +26,7 @@ export async function createProduct(formData: FormData) {
 
   if (!name || !categoryId) return;
 
-  const total = await prisma.product.count();
-
-  const code = `BTI-${String(total + 1).padStart(4, "0")}`;
+  const code = `BTI-${Date.now()}`;
 
   await prisma.product.create({
     data: {
