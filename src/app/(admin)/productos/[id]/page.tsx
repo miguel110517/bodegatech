@@ -33,9 +33,20 @@ export default async function EditarProductoPage({
     <main className="min-h-screen bg-black text-white p-10">
       <div className="max-w-4xl mx-auto">
 
-        <h1 className="text-4xl font-bold mb-8">
+        <h1 className="text-4xl font-bold mb-2">
           Editar Producto
         </h1>
+
+        <p className="text-zinc-400 mb-6">
+          Editando: {producto.name}
+        </p>
+
+        <a
+          href="/productos"
+          className="inline-block mb-6 text-blue-400 hover:text-blue-300"
+        >
+          ← Volver a Productos
+        </a>
 
         <form
           action={async (formData) => {
@@ -47,89 +58,150 @@ export default async function EditarProductoPage({
 
           <div className="grid md:grid-cols-2 gap-4">
 
-            <input
-              name="name"
-              defaultValue={producto.name}
-              className="p-3 rounded bg-zinc-800"
-              required
-            />
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Nombre
+              </label>
 
-            <input
-              name="brand"
-              defaultValue={producto.brand ?? ""}
-              className="p-3 rounded bg-zinc-800"
-            />
+              <input
+                name="name"
+                defaultValue={producto.name}
+                className="w-full p-3 rounded bg-zinc-800"
+                required
+              />
+            </div>
 
-            <input
-              name="costPrice"
-              type="number"
-              step="0.01"
-              defaultValue={producto.costPrice}
-              className="p-3 rounded bg-zinc-800"
-            />
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Marca
+              </label>
 
-            <input
-              name="salePrice"
-              type="number"
-              step="0.01"
-              defaultValue={producto.salePrice}
-              className="p-3 rounded bg-zinc-800"
-            />
+              <input
+                name="brand"
+                defaultValue={producto.brand ?? ""}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
 
-            <input
-              name="offerPrice"
-              type="number"
-              step="0.01"
-              defaultValue={producto.offerPrice ?? ""}
-              className="p-3 rounded bg-zinc-800"
-            />
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Precio costo
+              </label>
 
-            <input
-              name="stock"
-              type="number"
-              defaultValue={producto.stock}
-              className="p-3 rounded bg-zinc-800"
-            />
+              <input
+                name="costPrice"
+                type="number"
+                step="0.01"
+                defaultValue={producto.costPrice}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
 
-            <input
-              name="minStock"
-              type="number"
-              defaultValue={producto.minStock}
-              className="p-3 rounded bg-zinc-800"
-            />
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Precio venta
+              </label>
 
-            <input
-              name="location"
-              defaultValue={producto.location ?? ""}
-              className="p-3 rounded bg-zinc-800"
-            />
+              <input
+                name="salePrice"
+                type="number"
+                step="0.01"
+                defaultValue={producto.salePrice}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
 
-            <select
-              name="categoryId"
-              defaultValue={producto.categoryId}
-              className="p-3 rounded bg-zinc-800"
-            >
-              {categorias.map((categoria) => (
-                <option
-                  key={categoria.id}
-                  value={categoria.id}
-                >
-                  {categoria.name}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Precio oferta
+              </label>
+
+              <input
+                name="offerPrice"
+                type="number"
+                step="0.01"
+                defaultValue={producto.offerPrice ?? ""}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Stock
+              </label>
+
+              <input
+                name="stock"
+                type="number"
+                defaultValue={producto.stock}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Stock mínimo
+              </label>
+
+              <input
+                name="minStock"
+                type="number"
+                defaultValue={producto.minStock}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm text-zinc-400">
+                Ubicación
+              </label>
+
+              <input
+                name="location"
+                defaultValue={producto.location ?? ""}
+                className="w-full p-3 rounded bg-zinc-800"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block mb-2 text-sm text-zinc-400">
+                Categoría
+              </label>
+
+              <select
+                name="categoryId"
+                defaultValue={producto.categoryId}
+                className="w-full p-3 rounded bg-zinc-800"
+              >
+                {categorias.map((categoria) => (
+                  <option
+                    key={categoria.id}
+                    value={categoria.id}
+                  >
+                    {categoria.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
           </div>
 
-          <textarea
-            name="description"
-            defaultValue={producto.description ?? ""}
-            className="w-full p-3 rounded bg-zinc-800 mt-4"
-          />
+          <div className="mt-4">
+            <label className="block mb-2 text-sm text-zinc-400">
+              Descripción
+            </label>
+
+            <textarea
+              name="description"
+              defaultValue={producto.description ?? ""}
+              className="w-full p-3 rounded bg-zinc-800"
+              rows={5}
+            />
+          </div>
 
           <button
             type="submit"
-            className="bg-blue-600 px-5 py-3 rounded mt-4"
+            className="bg-blue-600 hover:bg-blue-700 transition px-5 py-3 rounded mt-6"
           >
             Guardar Cambios
           </button>

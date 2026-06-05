@@ -4,9 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function createPurchase(formData: FormData) {
-  const invoice =
-    formData.get("invoice")?.toString() || null;
-
   const providerId =
     formData.get("providerId")?.toString() || "";
 
@@ -18,6 +15,30 @@ export async function createPurchase(formData: FormData) {
 
   const costPrice =
     formData.getAll("costPrice") as string[];
+
+  const compras = await prisma.purchase.findMany({
+    select: {
+      invoice: true,
+    },
+  });
+
+  let mayorNumero = 0;
+
+  for (const compra of compras) {
+    if (!compra.invoice?.startsWith("COM-")) continue;
+
+    const numero = parseInt(
+      compra.invoice.replace("COM-", "")
+    );
+
+    if (!isNaN(numero) && numero > mayorNumero) {
+      mayorNumero = numero;
+    }
+  }
+
+  const invoice = `COM-${String(
+    mayorNumero + 1
+  ).padStart(4, "0")}`;
 
   const purchase = await prisma.purchase.create({
     data: {
@@ -47,6 +68,7 @@ export async function createPurchase(formData: FormData) {
         stock: {
           increment: qty,
         },
+        costPrice: cost,
       },
     });
   }

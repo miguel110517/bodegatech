@@ -7,6 +7,8 @@ interface Props {
   }>;
 }
 
+
+
 export default async function HistorialProductoPage({
   params,
 }: Props) {
@@ -74,12 +76,29 @@ export default async function HistorialProductoPage({
     );
 
   return (
-    <main className="min-h-screen bg-black text-white p-10">
-      <div className="max-w-7xl mx-auto">
 
-        <h1 className="text-4xl font-bold mb-8">
-          Historial del Producto
-        </h1>
+   <main className="min-h-screen bg-black text-white p-10">
+  <div className="max-w-7xl mx-auto">
+
+    <a
+      href="/productos"
+      className="
+        inline-block
+        bg-zinc-800
+        hover:bg-zinc-700
+        px-4
+        py-2
+        rounded-xl
+        transition
+        mb-6
+      "
+    >
+      ← Volver a Productos
+    </a>
+
+    <h1 className="text-4xl font-bold mb-8">
+      Historial del Producto
+    </h1>
 
         <div className="bg-zinc-900 p-6 rounded-xl mb-8">
 

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function updateProduct(
   id: string,
@@ -33,4 +34,6 @@ export async function updateProduct(
   });
 
   revalidatePath("/productos");
+
+  redirect("/productos?updated=1");
 }

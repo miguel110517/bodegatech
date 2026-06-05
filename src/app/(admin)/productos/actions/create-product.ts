@@ -11,14 +11,12 @@ export async function createProduct(formData: FormData) {
   const imageUrl =
     formData.get("imageUrl")?.toString().trim() || null;
 
-  const costPrice = Number(formData.get("costPrice"));
   const salePrice = Number(formData.get("salePrice"));
 
   const offerPrice = formData.get("offerPrice")
     ? Number(formData.get("offerPrice"))
     : null;
 
-  const stock = Number(formData.get("stock"));
   const minStock = Number(formData.get("minStock"));
 
   const location =
@@ -58,10 +56,13 @@ export async function createProduct(formData: FormData) {
       description,
       brand,
       imageUrl,
-      costPrice,
+
+      costPrice: 0,
+      stock: 0,
+
       salePrice,
       offerPrice,
-      stock,
+
       minStock,
       location,
       categoryId,
