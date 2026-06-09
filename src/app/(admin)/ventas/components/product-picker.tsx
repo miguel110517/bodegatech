@@ -28,6 +28,9 @@ export default function ProductPicker({ products, onSelect }: Props) {
       product.code?.toLowerCase().includes(search.toLowerCase()) ||
       product.brand?.toLowerCase().includes(search.toLowerCase()),
   );
+
+  console.log(products);
+
   return (
     <>
       <button
@@ -91,8 +94,19 @@ export default function ProductPicker({ products, onSelect }: Props) {
                       </p>
                     </div>
 
-                    <div className="text-green-400 font-bold text-lg">
-                      ${product.salePrice.toLocaleString("es-CO")}
+                    <div className="text-right">
+                      {product.offerPrice && (
+                        <p className="text-sm text-zinc-500 line-through">
+                          ${product.salePrice.toLocaleString("es-CO")}
+                        </p>
+                      )}
+
+                      <p className="text-green-400 font-bold text-lg">
+                        $
+                        {(
+                          product.offerPrice ?? product.salePrice
+                        ).toLocaleString("es-CO")}
+                      </p>
                     </div>
                   </div>
                 </button>

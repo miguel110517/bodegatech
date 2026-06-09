@@ -16,6 +16,7 @@ type Product = {
   id: string;
   name: string;
   salePrice: number;
+  offerPrice?: number | null;
   stock: number;
 };
 
@@ -64,23 +65,24 @@ export default function SaleForm({ productos, clientes }: Props) {
       ...cart,
       {
         ...product,
+        salePrice: product.offerPrice ?? product.salePrice,
         quantity: 1,
       },
     ]);
   }
 
   function increase(productId: string) {
-    setCart(
-      cart.map((item) =>
-        item.id === productId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item,
-      ),
-    );
-  }
+  setCart(
+    cart.map((item) =>
+      item.id === productId
+        ? {
+            ...item,
+            quantity: item.quantity + 1,
+          }
+        : item,
+    ),
+  );
+}
 
   function decrease(productId: string) {
     setCart(
