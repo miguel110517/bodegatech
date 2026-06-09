@@ -23,34 +23,31 @@ export default async function VentasPage() {
     },
   });
 
- const ventas = await prisma.sale.findMany({
-  where: {
-    active: true,
-  },
-  include: {
-    customer: true,
+  const ventas = await prisma.sale.findMany({
+    where: {
+      active: true,
+    },
+    include: {
+      customer: true,
 
-    accountsReceivable: true,
+      accountsReceivable: true,
 
-    items: {
-      include: {
-        product: true,
+      items: {
+        include: {
+          product: true,
+        },
       },
     },
-  },
-  orderBy: {
-    createdAt: "desc",
-  },
-});
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
   return (
     <main className="min-h-screen bg-black text-white p-10">
       <div className="max-w-7xl mx-auto">
-
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">
-            Ventas
-          </h1>
+          <h1 className="text-4xl font-bold">Ventas</h1>
 
           <a
             href="/ventas/desactivadas"
@@ -60,15 +57,11 @@ export default async function VentasPage() {
           </a>
         </div>
 
-        <SaleForm
-          productos={productos}
-          clientes={clientes}
-        />
-
-        <SalesTable
-          ventas={ventas}
-        />
-
+        <SaleForm productos={productos} clientes={clientes} />
+        <p className="text-red-500 mb-4">
+          Clientes: {clientes.length} | Productos: {productos.length}
+        </p>
+        <SalesTable ventas={ventas} />
       </div>
     </main>
   );
