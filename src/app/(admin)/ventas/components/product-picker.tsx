@@ -27,8 +27,6 @@ export default function ProductPicker({ products, onSelect }: Props) {
       product.code?.toLowerCase().includes(search.toLowerCase()) ||
       product.brand?.toLowerCase().includes(search.toLowerCase()),
   );
-  console.log("PRODUCTS", products);
-  console.log("TOTAL", products.length);
   return (
     <>
       <button

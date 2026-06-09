@@ -31,9 +31,6 @@ export default function CustomerPicker({
       customer.phone?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  console.log("CUSTOMERS", customers);
-  console.log("TOTAL", customers.length);
-
   return (
     <>
       <button
@@ -82,7 +79,6 @@ export default function CustomerPicker({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              <p className="text-red-500">Total clientes: {customers.length}</p>
               {filteredCustomers.map((customer) => (
                 <button
                   key={customer.id}
