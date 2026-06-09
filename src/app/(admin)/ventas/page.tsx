@@ -8,20 +8,23 @@ export default async function VentasPage() {
     },
   });
 
-  const productos = await prisma.product.findMany({
-    where: {
-      active: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      salePrice: true,
-      stock: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
+const productos = await prisma.product.findMany({
+  where: {
+    active: true,
+  },
+  select: {
+    id: true,
+    code: true,
+    name: true,
+    brand: true,
+    salePrice: true,
+    offerPrice: true,
+    stock: true,
+  },
+  orderBy: {
+    name: "asc",
+  },
+});
 
   const ventas = await prisma.sale.findMany({
     where: {

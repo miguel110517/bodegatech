@@ -9,6 +9,7 @@ type Product = {
   brand?: string | null;
   stock: number;
   salePrice: number;
+  offerPrice?: number | null;
   imageUrl?: string | null;
 };
 
