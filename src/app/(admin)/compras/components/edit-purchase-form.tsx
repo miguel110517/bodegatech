@@ -1,161 +1,114 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import ProductPicker from "./product-picker";
+import { useState } from "react";
 import ProviderPicker from "./provider-picker";
-
-
-type Product = {
-  id: string;
-  code: string;
-  name: string;
-  stock: number;
-};
-
-type Provider = {
-  id: string;
-  name: string;
-};
-
-type PurchaseItem = {
-  id: number;
-  productId: string;
-  productLabel: string;
-  quantity: string;
-  costPrice: string;
-};
+import ProductPicker from "./product-picker";
 
 type Props = {
-  productos: Product[];
-  proveedores: Provider[];
+  compra: any;
+  productos: any[];
+  proveedores: any[];
   action: (formData: FormData) => Promise<void>;
 };
 
-export default function PurchaseForm({
+export default function EditPurchaseForm({
+  compra,
   productos,
   proveedores,
   action,
 }: Props) {
-  const [items, setItems] = useState<PurchaseItem[]>([
-    {
-      id: Date.now(),
-      productId: "",
-      productLabel: "",
-      quantity: "",
-      costPrice: "",
-    },
-  ]);
 
   const router = useRouter();
-  const [selectedProvider, setSelectedProvider] =
-    useState<Provider | null>(null);
+  const [providerId, setProviderId] = useState(
+    compra.providerId
+  );
+
+  const [providerName, setProviderName] =
+    useState(
+      proveedores.find(
+        (p) => p.id === compra.providerId
+      )?.name || ""
+    );
+
+  const [items, setItems] = useState(
+    compra.items.map((item: any) => ({
+      id: item.id,
+      productId: item.productId,
+      productLabel: `${item.product.code} - ${item.product.name}`,
+      quantity: item.quantity.toString(),
+      costPrice: item.costPrice.toString(),
+    }))
+  );
 
   const total = items.reduce(
-    (acc, item) =>
+    (acc: number, item: any) =>
       acc +
       (Number(item.quantity) || 0) *
       (Number(item.costPrice) || 0),
     0
   );
 
-  async function handleSubmit(
-    formData: FormData
-  ) {
+  async function handleSubmit(formData: FormData) {
     await action(formData);
 
     toast.success(
-      "Compra registrada correctamente"
+      "Compra actualizada correctamente"
     );
 
-    setItems([
-      {
-        id: Date.now(),
-        productId: "",
-        productLabel: "",
-        quantity: "",
-        costPrice: "",
-      },
-    ]);
-
+    router.push("/compras");
     router.refresh();
   }
-
-  const handleProductChange = (
-    index: number,
-    value: string
-  ) => {
-    const producto = productos.find(
-      (p) =>
-        `${p.code} - ${p.name}` === value
-    );
-
-    setItems((prev) =>
-      prev.map((row, i) =>
-        i === index
-          ? {
-            ...row,
-            productLabel: value,
-            productId: producto?.id || "",
-          }
-          : row
-      )
-    );
-  };
 
   return (
     <form
       action={handleSubmit}
-      className="bg-zinc-900 p-6 rounded-xl mb-10"
+      className="bg-zinc-900 p-6 rounded-xl"
     >
-      <div className="grid md:grid-cols-1 gap-4 mb-6">
-        <div>
-          <label className="block mb-2 text-sm font-medium text-zinc-300">
-            Proveedor
-          </label>
+      <div className="mb-6">
+        <label className="block mb-2 text-sm text-zinc-400">
+          Proveedor
+        </label>
 
-          <ProviderPicker
-            providers={proveedores}
-            onSelect={(provider) =>
-              setSelectedProvider(provider)
-            }
-          />
+        <ProviderPicker
+          providers={proveedores}
+          onSelect={(provider) => {
+            setProviderId(provider.id);
+            setProviderName(provider.name);
+          }}
+        />
 
-          <input
-            type="hidden"
-            name="providerId"
-            value={selectedProvider?.id || ""}
-          />
+        <input
+          type="hidden"
+          name="providerId"
+          value={providerId}
+        />
 
-          {selectedProvider && (
-            <div className="mt-2 p-3 bg-zinc-800 rounded">
-              <p className="font-semibold text-green-400">
-                Proveedor seleccionado
-              </p>
-
-              <p>{selectedProvider.name}</p>
-            </div>
-          )}
-        </div>
+        {providerName && (
+          <div className="mt-2 p-3 bg-zinc-800 rounded">
+            <span className="text-green-400 font-semibold">
+              Seleccionado:
+            </span>{" "}
+            {providerName}
+          </div>
+        )}
       </div>
 
-      {items.map((item, index) => (
-
+      {items.map((item: any, index: number) => (
         <div
           key={item.id}
-          className="grid md:grid-cols-4 gap-4 mb-6"
+          className="grid md:grid-cols-4 gap-4 mb-4"
         >
           <div>
             <label className="block text-xs text-zinc-400 mb-1">
               Producto
             </label>
 
-            
             <ProductPicker
               products={productos}
               onSelect={(product) => {
-                setItems((prev) =>
+                setItems((prev: any[]) =>
                   prev.map((row, i) =>
                     i === index
                       ? {
@@ -194,7 +147,7 @@ export default function PurchaseForm({
               min="1"
               value={item.quantity}
               onChange={(e) =>
-                setItems((prev) =>
+                setItems((prev: any[]) =>
                   prev.map((row, i) =>
                     i === index
                       ? {
@@ -222,7 +175,7 @@ export default function PurchaseForm({
               step="0.01"
               value={item.costPrice}
               onChange={(e) =>
-                setItems((prev) =>
+                setItems((prev: any[]) =>
                   prev.map((row, i) =>
                     i === index
                       ? {
@@ -254,7 +207,10 @@ export default function PurchaseForm({
                 }
 
                 setItems(
-                  items.filter((_, i) => i !== index)
+                  items.filter(
+                    (_: any, i: number) =>
+                      i !== index
+                  )
                 );
               }}
               className="w-full bg-red-600 rounded p-3"
@@ -262,24 +218,20 @@ export default function PurchaseForm({
               ✕ Eliminar
             </button>
           </div>
-          
-
         </div>
       ))}
-
-
+      
       <div className="bg-zinc-800 rounded-xl p-4 mt-6 mb-4">
         <p className="text-zinc-400">
-          Productos agregados: {items.length}
+          Productos: {items.length}
         </p>
 
         <p className="text-2xl font-bold text-green-400">
-          Total compra: $
-          {total.toLocaleString()}
+          Total: ${total.toLocaleString()}
         </p>
       </div>
 
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-4">
         <button
           type="button"
           onClick={() =>
@@ -303,7 +255,7 @@ export default function PurchaseForm({
           type="submit"
           className="bg-blue-600 px-5 py-3 rounded"
         >
-          Registrar Compra
+          Guardar Cambios
         </button>
       </div>
     </form>

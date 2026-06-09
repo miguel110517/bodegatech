@@ -22,9 +22,16 @@ model User {
 
 model Category {
   id          String    @id @default(cuid())
+
   name        String
   description String?
+
+  active      Boolean   @default(true)
+
+  deletedAt   DateTime?
+
   products    Product[]
+
   createdAt   DateTime  @default(now())
 }
 
@@ -80,6 +87,10 @@ model Purchase {
 
   invoice String?
 
+  active Boolean @default(true)
+
+  deletedAt DateTime?
+
   providerId String
   provider   Provider @relation(fields: [providerId], references: [id])
 
@@ -119,13 +130,35 @@ model Customer {
   createdAt DateTime @default(now())
 }
 
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+  MIXED
+  CREDIT
+}
+
 model Sale {
   id String @id @default(cuid())
 
-  invoice String?
+  invoice String @unique
+
+  active Boolean @default(true)
+
+  deletedAt DateTime?
+
+  paymentMethod PaymentMethod @default(CASH)
+
+  subtotal Float @default(0)
+
+  discount Float @default(0)
+
+  total Float @default(0)
+
+  notes String?
 
   customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
 
   items SaleItem[]
 
@@ -158,6 +191,10 @@ enum AccountStatus {
 
 model AccountReceivable {
   id String @id @default(cuid())
+
+  active Boolean @default(true)
+
+  deletedAt DateTime?
 
   saleId String @unique
   sale   Sale   @relation(fields: [saleId], references: [id])

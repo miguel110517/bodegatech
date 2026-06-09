@@ -7,9 +7,6 @@ export async function updatePurchase(
   id: string,
   formData: FormData
 ) {
-  const invoice =
-    formData.get("invoice")?.toString() || null;
-
   const providerId =
     formData.get("providerId")?.toString() || "";
 
@@ -24,6 +21,7 @@ export async function updatePurchase(
 
   if (!purchase) return;
 
+  // Revertir stock anterior
   for (const item of purchase.items) {
     await prisma.product.update({
       where: {
@@ -37,6 +35,7 @@ export async function updatePurchase(
     });
   }
 
+  // Eliminar items anteriores
   await prisma.purchaseItem.deleteMany({
     where: {
       purchaseId: id,
@@ -52,6 +51,7 @@ export async function updatePurchase(
   const costPrice =
     formData.getAll("costPrice") as string[];
 
+  // Crear nuevos items y actualizar inventario
   for (let i = 0; i < productId.length; i++) {
     const qty = Number(quantity[i]);
     const cost = Number(costPrice[i]);
@@ -73,6 +73,7 @@ export async function updatePurchase(
         stock: {
           increment: qty,
         },
+        costPrice: cost,
       },
     });
   }
@@ -82,7 +83,6 @@ export async function updatePurchase(
       id,
     },
     data: {
-      invoice,
       providerId,
     },
   });

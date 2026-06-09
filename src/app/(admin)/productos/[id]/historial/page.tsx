@@ -23,8 +23,13 @@ export default async function HistorialProductoPage({
 
       purchaseItems: {
         include: {
-          purchase: true,
+          purchase: {
+            include: {
+              provider: true,
+            },
+          },
         },
+
         orderBy: {
           createdAt: "desc",
         },
@@ -77,12 +82,12 @@ export default async function HistorialProductoPage({
 
   return (
 
-   <main className="min-h-screen bg-black text-white p-10">
-  <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-black text-white p-10">
+      <div className="max-w-7xl mx-auto">
 
-    <a
-      href="/productos"
-      className="
+        <a
+          href="/productos"
+          className="
         inline-block
         bg-zinc-800
         hover:bg-zinc-700
@@ -92,13 +97,13 @@ export default async function HistorialProductoPage({
         transition
         mb-6
       "
-    >
-      ← Volver a Productos
-    </a>
+        >
+          ← Volver a Productos
+        </a>
 
-    <h1 className="text-4xl font-bold mb-8">
-      Historial del Producto
-    </h1>
+        <h1 className="text-4xl font-bold mb-8">
+          Historial del Producto
+        </h1>
 
         <div className="bg-zinc-900 p-6 rounded-xl mb-8">
 
@@ -175,95 +180,137 @@ export default async function HistorialProductoPage({
 
         <div className="grid md:grid-cols-2 gap-8">
 
+          {/* COMPRAS */}
           <div>
 
             <h2 className="text-2xl font-bold mb-4">
               Historial de Compras
             </h2>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
 
-              {producto.purchaseItems.map(
-                (item) => (
-                  <div
-                    key={item.id}
-                    className="bg-zinc-900 p-4 rounded-xl"
-                  >
+              {producto.purchaseItems.map((item) => (
+
+                <div
+                  key={item.id}
+                  className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+                >
+
+                  <div className="flex justify-between items-center mb-3">
+
+                    <div>
+                      <p className="font-bold text-yellow-400">
+                        Factura: {item.purchase.invoice || "Sin factura"}
+                      </p>
+
+                      <p className="text-zinc-400 text-sm">
+                        {new Date(
+                          item.createdAt
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-2">
+
                     <p>
-                      Factura:{" "}
-                      {item.purchase.invoice ||
-                        "-"}
+                      <strong>Proveedor:</strong>{" "}
+                      {item.purchase.provider.name}
                     </p>
 
                     <p>
-                      Cantidad:{" "}
+                      <strong>Cantidad:</strong>{" "}
                       {item.quantity}
                     </p>
 
                     <p>
-                      Costo: $
-                      {item.costPrice.toLocaleString()}
+                      <strong>Costo Unitario:</strong>{" "}
+                      ${item.costPrice.toLocaleString()}
                     </p>
 
-                    <p className="text-zinc-400 text-sm">
-                      {new Date(
-                        item.createdAt
-                      ).toLocaleDateString()}
+                    <p>
+                      <strong>Total:</strong>{" "}
+                      ${(item.quantity * item.costPrice).toLocaleString()}
                     </p>
+
                   </div>
-                )
-              )}
+
+                </div>
+
+              ))}
 
             </div>
 
           </div>
 
+          {/* VENTAS */}
           <div>
 
             <h2 className="text-2xl font-bold mb-4">
               Historial de Ventas
             </h2>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
 
-              {producto.saleItems.map(
-                (item) => (
-                  <div
-                    key={item.id}
-                    className="bg-zinc-900 p-4 rounded-xl"
-                  >
+              {producto.saleItems.map((item) => (
+
+                <div
+                  key={item.id}
+                  className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"
+                >
+
+                  <div className="flex justify-between items-center mb-3">
+
+                    <div>
+                      <p className="font-bold text-green-400">
+                        Factura: {item.sale.invoice || "Sin factura"}
+                      </p>
+
+                      <p className="text-zinc-400 text-sm">
+                        {new Date(
+                          item.createdAt
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-2">
+
                     <p>
-                      Factura:{" "}
-                      {item.sale.invoice ||
-                        "-"}
+                      <strong>Cliente:</strong>{" "}
+                      {item.sale.customer.name}
                     </p>
 
                     <p>
-                      Cliente:{" "}
-                      {
-                        item.sale.customer
-                          .name
-                      }
-                    </p>
-
-                    <p>
-                      Cantidad:{" "}
+                      <strong>Cantidad:</strong>{" "}
                       {item.quantity}
                     </p>
 
                     <p>
-                      Venta: $
-                      {item.salePrice.toLocaleString()}
+                      <strong>Precio Venta:</strong>{" "}
+                      ${item.salePrice.toLocaleString()}
                     </p>
 
-                    <p className="text-zinc-400 text-sm">
-                      {new Date(
-                        item.createdAt
-                      ).toLocaleDateString()}
+                    <p>
+                      <strong>Total:</strong>{" "}
+                      ${(item.quantity * item.salePrice).toLocaleString()}
                     </p>
+
+                    <p className="md:col-span-2 text-blue-400 font-semibold">
+                      Utilidad: $
+                      {(
+                        (item.salePrice - item.costPrice) *
+                        item.quantity
+                      ).toLocaleString()}
+                    </p>
+
                   </div>
-                )
-              )}
+
+                </div>
+
+              ))}
 
             </div>
 

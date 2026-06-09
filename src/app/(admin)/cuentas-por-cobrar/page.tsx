@@ -1,194 +1,199 @@
 import { prisma } from "@/lib/prisma";
-import { createAccount } from "./actions/create-account";
-import { deleteAccount } from "./actions/delete-account";
 
 export default async function CuentasPorCobrarPage() {
-    const ventas = await prisma.sale.findMany({
+  const cuentas = await prisma.accountReceivable.findMany({
+    where: {
+      active: true,
+    },
+    include: {
+      sale: {
         include: {
-            customer: true,
+          customer: true,
         },
-        orderBy: {
-            createdAt: "desc",
-        },
-    });
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-    const cuentas =
-        await prisma.accountReceivable.findMany({
-            include: {
-                sale: {
-                    include: {
-                        customer: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
+  const totalPendiente = cuentas.reduce(
+    (acc, cuenta) => acc + cuenta.pendingAmount,
+    0,
+  );
 
-    return (
-        <main className="min-h-screen bg-black text-white p-10">
-            <div className="max-w-7xl mx-auto">
+  const totalPagado = cuentas.reduce(
+    (acc, cuenta) => acc + cuenta.paidAmount,
+    0,
+  );
 
-                <h1 className="text-4xl font-bold mb-8">
-                    Cuentas por Cobrar
-                </h1>
+  const cuentasPendientes = cuentas.filter(
+    (cuenta) => cuenta.status === "PENDING",
+  ).length;
 
-                <form
-                    action={createAccount}
-                    className="bg-zinc-900 p-6 rounded-xl mb-10"
-                >
-                    <div className="grid md:grid-cols-4 gap-4">
+  return (
+    <main className="min-h-screen bg-black text-white p-10">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold mb-8">
+          Cuentas por Cobrar
+        </h1>
 
-                        <select
-                            name="saleId"
-                            className="p-3 rounded bg-zinc-800"
-                            required
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p className="text-zinc-400">
+              Cuentas Pendientes
+            </p>
+
+            <h2 className="text-3xl font-bold">
+              {cuentasPendientes}
+            </h2>
+          </div>
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p className="text-zinc-400">
+              Total Pendiente
+            </p>
+
+            <h2 className="text-3xl font-bold text-red-400">
+              ${totalPendiente.toLocaleString("es-CO")}
+            </h2>
+          </div>
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p className="text-zinc-400">
+              Total Recuperado
+            </p>
+
+            <h2 className="text-3xl font-bold text-green-400">
+              ${totalPagado.toLocaleString("es-CO")}
+            </h2>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full bg-zinc-900 rounded-xl overflow-hidden">
+            <thead className="bg-zinc-800">
+              <tr>
+                <th className="p-4 text-left">
+                  Factura
+                </th>
+
+                <th className="p-4 text-left">
+                  Cliente
+                </th>
+
+                <th className="p-4 text-right">
+                  Total
+                </th>
+
+                <th className="p-4 text-right">
+                  Pagado
+                </th>
+
+                <th className="p-4 text-right">
+                  Pendiente
+                </th>
+
+                <th className="p-4 text-center">
+                  Fecha límite
+                </th>
+
+                <th className="p-4 text-center">
+                  Estado
+                </th>
+
+                <th className="p-4 text-center">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {cuentas.map((cuenta) => {
+                const vencida =
+                  cuenta.status === "PENDING" &&
+                  cuenta.dueDate &&
+                  new Date(cuenta.dueDate) <
+                    new Date();
+
+                return (
+                  <tr
+                    key={cuenta.id}
+                    className="border-t border-zinc-800"
+                  >
+                    <td className="p-4">
+                      {cuenta.sale.invoice}
+                    </td>
+
+                    <td className="p-4">
+                      {cuenta.sale.customer.name}
+                    </td>
+
+                    <td className="p-4 text-right">
+                      $
+                      {cuenta.totalAmount.toLocaleString(
+                        "es-CO",
+                      )}
+                    </td>
+
+                    <td className="p-4 text-right text-green-400 font-bold">
+                      $
+                      {cuenta.paidAmount.toLocaleString(
+                        "es-CO",
+                      )}
+                    </td>
+
+                    <td className="p-4 text-right text-red-400 font-bold">
+                      $
+                      {cuenta.pendingAmount.toLocaleString(
+                        "es-CO",
+                      )}
+                    </td>
+
+                    <td className="p-4 text-center">
+                      {cuenta.dueDate
+                        ? new Date(
+                            cuenta.dueDate,
+                          ).toLocaleDateString(
+                            "es-CO",
+                          )
+                        : "-"}
+                    </td>
+
+                    <td className="p-4 text-center">
+                      {vencida ? (
+                        <span className="text-red-500 font-bold">
+                          VENCIDA
+                        </span>
+                      ) : cuenta.status ===
+                        "PAID" ? (
+                        <span className="text-green-400 font-bold">
+                          PAGADA
+                        </span>
+                      ) : (
+                        <span className="text-yellow-400 font-bold">
+                          PENDIENTE
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex justify-center gap-2">
+                        <a
+                          href={`/cuentas-por-cobrar/${cuenta.id}`}
+                          className="bg-blue-600 px-4 py-2 rounded"
                         >
-                            <option value="">
-                                Seleccione una venta
-                            </option>
-
-                            {ventas.map((venta) => (
-                                <option
-                                    key={venta.id}
-                                    value={venta.id}
-                                >
-                                    {venta.invoice || "Sin factura"} -{" "}
-                                    {venta.customer.name}
-                                </option>
-                            ))}
-                        </select>
-
-                        <input
-                            name="totalAmount"
-                            type="number"
-                            step="0.01"
-                            placeholder="Total"
-                            className="p-3 rounded bg-zinc-800"
-                            required
-                        />
-
-                        <input
-                            name="paidAmount"
-                            type="number"
-                            step="0.01"
-                            placeholder="Pagado"
-                            className="p-3 rounded bg-zinc-800"
-                            defaultValue={0}
-                        />
-
-                        <input
-                            name="dueDate"
-                            type="date"
-                            className="p-3 rounded bg-zinc-800"
-                        />
-
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="bg-blue-600 px-5 py-3 rounded mt-4"
-                    >
-                        Crear Cuenta
-                    </button>
-
-                </form>
-
-                <div className="space-y-4">
-
-                    {cuentas.map((cuenta) => (
-                        <div
-                            key={cuenta.id}
-                            className="bg-zinc-900 p-5 rounded-xl border border-zinc-800"
-                        >
-
-                            <div className="flex justify-between items-start">
-
-                                <div>
-
-                                    <h2 className="text-xl font-bold">
-                                        {cuenta.sale.customer.name}
-                                    </h2>
-
-                                    <p className="text-zinc-400">
-                                        Factura:{" "}
-                                        {cuenta.sale.invoice || "-"}
-                                    </p>
-
-                                </div>
-
-                                <span
-                                    className={
-                                        cuenta.status === "PAID"
-                                            ? "text-green-400 font-bold"
-                                            : "text-red-400 font-bold"
-                                    }
-                                >
-                                    {cuenta.status}
-                                </span>
-
-                            </div>
-
-                            <div className="mt-4 space-y-1">
-
-                                <p>
-                                    Total: $
-                                    {cuenta.totalAmount.toLocaleString()}
-                                </p>
-
-                                <p>
-                                    Pagado: $
-                                    {cuenta.paidAmount.toLocaleString()}
-                                </p>
-
-                                <p>
-                                    Pendiente: $
-                                    {cuenta.pendingAmount.toLocaleString()}
-                                </p>
-
-                                <p>
-                                    Fecha límite:{" "}
-                                    {cuenta.dueDate
-                                        ? new Date(
-                                            cuenta.dueDate
-                                        ).toLocaleDateString()
-                                        : "-"}
-                                </p>
-
-                            </div>
-
-                            <div className="flex gap-3 mt-4">
-
-                                <a
-                                    href={`/cuentas-por-cobrar/${cuenta.id}`}
-                                    className="bg-blue-600 px-4 py-2 rounded"
-                                >
-                                    Ver / Gestionar
-                                </a>
-
-                                <form
-                                    action={async () => {
-                                        "use server";
-                                        await deleteAccount(cuenta.id);
-                                    }}
-                                >
-                                    <button
-                                        type="submit"
-                                        className="bg-red-600 px-4 py-2 rounded"
-                                    >
-                                        Eliminar
-                                    </button>
-                                </form>
-
-                            </div>
-
-                        </div>
-                    ))}
-
-                </div>
-
-            </div>
-        </main>
-    );
+                          Gestionar
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  );
 }

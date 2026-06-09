@@ -3,8 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function deleteCategory(id: string) {
-  await prisma.category.update({
+export async function deactivateSale(id: string) {
+  await prisma.sale.update({
     where: {
       id,
     },
@@ -14,6 +14,6 @@ export async function deleteCategory(id: string) {
     },
   });
 
-  revalidatePath("/categorias");
-  revalidatePath("/categorias/desactivadas");
+  revalidatePath("/ventas");
+  revalidatePath("/ventas/desactivadas");
 }
