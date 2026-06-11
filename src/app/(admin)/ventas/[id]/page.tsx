@@ -35,15 +35,26 @@ export default async function EditarVentaPage({ params }: Props) {
     },
   });
 
-  const productos = await prisma.product.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
-
+const productos = await prisma.product.findMany({
+  where: {
+    active: true,
+  },
+  select: {
+    id: true,
+    code: true,
+    name: true,
+    brand: true,
+    salePrice: true,
+    offerPrice: true,
+    stock: true,
+  },
+  orderBy: {
+    name: "asc",
+  },
+});
   return (
     <main className="min-h-screen bg-black text-white p-10">
-      <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold">Editar Venta</h1>
 

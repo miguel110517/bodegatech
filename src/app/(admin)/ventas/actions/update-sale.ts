@@ -3,38 +3,26 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function updateSale(
-  id: string,
-  formData: FormData
-) {
-  const invoice =
-    formData.get("invoice")?.toString() || "";
+export async function updateSale(id: string, formData: FormData) {
+  const invoice = formData.get("invoice")?.toString() || "";
 
-  const customerId =
-    formData.get("customerId")?.toString() || "";
+  const customerId = formData.get("customerId")?.toString() || "";
 
-  const productId =
-    formData.getAll("productId") as string[];
+  const discount = Number(formData.get("discount") || 0);
 
-  const quantity =
-    formData.getAll("quantity") as string[];
+  const productId = formData.getAll("productId") as string[];
 
+  const quantity = formData.getAll("quantity") as string[];
   if (!invoice) {
-    throw new Error(
-      "La factura es obligatoria"
-    );
+    throw new Error("La factura es obligatoria");
   }
 
   if (!customerId) {
-    throw new Error(
-      "Debe seleccionar un cliente"
-    );
+    throw new Error("Debe seleccionar un cliente");
   }
 
   if (productId.length === 0) {
-    throw new Error(
-      "Debe agregar al menos un producto"
-    );
+    throw new Error("Debe agregar al menos un producto");
   }
 
   const sale = await prisma.sale.findUnique({
@@ -47,9 +35,7 @@ export async function updateSale(
   });
 
   if (!sale) {
-    throw new Error(
-      "La venta no existe"
-    );
+    throw new Error("La venta no existe");
   }
 
   // DEVOLVER STOCK ANTERIOR
@@ -88,26 +74,27 @@ export async function updateSale(
   });
 
   // CREAR NUEVOS ITEMS
-
+  let subtotal = 0;
   for (let i = 0; i < productId.length; i++) {
     const qty = Number(quantity[i]);
 
-    const product =
-      await prisma.product.findUnique({
-        where: {
-          id: productId[i],
-        },
-      });
+    const product = await prisma.product.findUnique({
+      where: {
+        id: productId[i],
+      },
+    });
 
     if (!product) {
       continue;
     }
 
     if (product.stock < qty) {
-      throw new Error(
-        `Stock insuficiente para ${product.name}`
-      );
+      throw new Error(`Stock insuficiente para ${product.name}`);
     }
+
+    const realSalePrice = product.offerPrice ?? product.salePrice;
+
+    subtotal += qty * realSalePrice;
 
     await prisma.saleItem.create({
       data: {
@@ -115,7 +102,7 @@ export async function updateSale(
         productId: product.id,
         quantity: qty,
         costPrice: product.costPrice,
-        salePrice: product.salePrice,
+        salePrice: realSalePrice,
       },
     });
 
@@ -131,12 +118,24 @@ export async function updateSale(
     });
   }
 
+  const total = subtotal - discount;
+
+  await prisma.sale.update({
+    where: {
+      id,
+    },
+    data: {
+      subtotal,
+      discount,
+      total,
+    },
+  });
+
   revalidatePath("/ventas");
   revalidatePath("/productos");
 
   return {
     success: true,
-    message:
-      "Venta editada correctamente",
+    message: "Venta editada correctamente",
   };
 }

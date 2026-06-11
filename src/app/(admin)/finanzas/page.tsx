@@ -14,7 +14,8 @@ export default async function FinanzasPage() {
     },
   });
 
-  const gastos = await prisma.expense.findMany();
+  const gastos =
+    await prisma.expense.findMany();
 
   const cuentas =
     await prisma.accountReceivable.findMany({
@@ -30,6 +31,16 @@ export default async function FinanzasPage() {
       },
     });
 
+  const caja =
+    await prisma.sale.aggregate({
+      _sum: {
+        cashAmount: true,
+        transferAmount: true,
+        cardAmount: true,
+        creditAmount: true,
+      },
+    });
+
   const totalVentas = ventas.reduce(
     (acum, item) =>
       acum +
@@ -38,7 +49,7 @@ export default async function FinanzasPage() {
     0
   );
 
-  const totalCompras = compras.reduce(
+  const costoVendido = ventas.reduce(
     (acum, item) =>
       acum +
       item.costPrice *
@@ -46,11 +57,13 @@ export default async function FinanzasPage() {
     0
   );
 
-  const totalGastos = gastos.reduce(
-    (acum, gasto) =>
-      acum + gasto.amount,
-    0
-  );
+  const totalGastos =
+    gastos.reduce(
+      (acum, gasto) =>
+        acum +
+        gasto.amount,
+      0
+    );
 
   const totalPorCobrar =
     cuentas.reduce(
@@ -62,12 +75,20 @@ export default async function FinanzasPage() {
 
   const gananciaBruta =
     totalVentas -
-    totalCompras;
+    costoVendido;
 
   const gananciaNeta =
-    totalVentas -
-    totalCompras -
+    gananciaBruta -
     totalGastos;
+
+  const margen =
+    totalVentas > 0
+      ? (
+          (gananciaBruta /
+            totalVentas) *
+          100
+        ).toFixed(2)
+      : "0";
 
   const productosMap =
     new Map<
@@ -94,15 +115,12 @@ export default async function FinanzasPage() {
       );
 
     if (actual) {
-
       actual.vendidos +=
         venta.quantity;
 
       actual.utilidad +=
         utilidad;
-
     } else {
-
       productosMap.set(
         venta.productId,
         {
@@ -113,7 +131,6 @@ export default async function FinanzasPage() {
           utilidad,
         }
       );
-
     }
 
   });
@@ -142,84 +159,177 @@ export default async function FinanzasPage() {
 
   return (
     <main className="min-h-screen bg-black text-white p-10">
+
       <div className="max-w-7xl mx-auto">
 
         <h1 className="text-4xl font-bold mb-8">
           Finanzas
         </h1>
 
+        {/* RESUMEN */}
+
         <div className="grid md:grid-cols-4 gap-4">
 
           <div className="bg-zinc-900 p-5 rounded-xl">
-            <p>Ventas Totales</p>
+            <p>Ventas</p>
             <h2 className="text-3xl font-bold text-green-400">
               $
-              {totalVentas.toLocaleString()}
+              {totalVentas.toLocaleString(
+                "es-CO"
+              )}
             </h2>
           </div>
 
           <div className="bg-zinc-900 p-5 rounded-xl">
-            <p>Compras Totales</p>
+            <p>Costo Vendido</p>
             <h2 className="text-3xl font-bold text-yellow-400">
               $
-              {totalCompras.toLocaleString()}
+              {costoVendido.toLocaleString(
+                "es-CO"
+              )}
             </h2>
           </div>
 
           <div className="bg-zinc-900 p-5 rounded-xl">
-            <p>Gastos Totales</p>
+            <p>Gastos</p>
             <h2 className="text-3xl font-bold text-red-400">
               $
-              {totalGastos.toLocaleString()}
+              {totalGastos.toLocaleString(
+                "es-CO"
+              )}
             </h2>
           </div>
 
           <div className="bg-zinc-900 p-5 rounded-xl">
-            <p>Cuentas por Cobrar</p>
+            <p>Por Cobrar</p>
             <h2 className="text-3xl font-bold text-orange-400">
               $
-              {totalPorCobrar.toLocaleString()}
+              {totalPorCobrar.toLocaleString(
+                "es-CO"
+              )}
             </h2>
           </div>
 
         </div>
+
+        {/* UTILIDAD */}
 
         <div className="grid md:grid-cols-2 gap-6 mt-8">
 
           <div className="bg-zinc-900 p-6 rounded-xl">
-
             <h2 className="text-2xl font-bold mb-4">
               Ganancia Bruta
             </h2>
 
-            <p className="text-4xl text-blue-400 font-bold">
+            <p className="text-4xl font-bold text-blue-400">
               $
-              {gananciaBruta.toLocaleString()}
+              {gananciaBruta.toLocaleString(
+                "es-CO"
+              )}
             </p>
-
           </div>
 
           <div className="bg-zinc-900 p-6 rounded-xl">
-
             <h2 className="text-2xl font-bold mb-4">
               Ganancia Neta
             </h2>
 
-            <p className="text-4xl text-green-400 font-bold">
+            <p className="text-4xl font-bold text-green-400">
               $
-              {gananciaNeta.toLocaleString()}
+              {gananciaNeta.toLocaleString(
+                "es-CO"
+              )}
             </p>
+          </div>
+
+        </div>
+
+        {/* FLUJO DE CAJA */}
+
+        <div className="grid md:grid-cols-4 gap-4 mt-8">
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p>Efectivo</p>
+            <h2 className="text-2xl font-bold text-green-400">
+              $
+              {(
+                caja._sum.cashAmount ??
+                0
+              ).toLocaleString(
+                "es-CO"
+              )}
+            </h2>
+          </div>
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p>Transferencias</p>
+            <h2 className="text-2xl font-bold text-cyan-400">
+              $
+              {(
+                caja._sum
+                  .transferAmount ??
+                0
+              ).toLocaleString(
+                "es-CO"
+              )}
+            </h2>
+          </div>
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p>Tarjetas</p>
+            <h2 className="text-2xl font-bold text-yellow-400">
+              $
+              {(
+                caja._sum.cardAmount ??
+                0
+              ).toLocaleString(
+                "es-CO"
+              )}
+            </h2>
+          </div>
+
+          <div className="bg-zinc-900 p-5 rounded-xl">
+            <p>Crédito Generado</p>
+            <h2 className="text-2xl font-bold text-orange-400">
+              $
+              {(
+                caja._sum
+                  .creditAmount ??
+                0
+              ).toLocaleString(
+                "es-CO"
+              )}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* INDICADORES */}
+
+        <div className="bg-zinc-900 p-6 rounded-xl mt-8">
+
+          <div className="flex justify-between">
+
+            <span>
+              Margen de Utilidad
+            </span>
+
+            <span className="text-2xl font-bold text-green-400">
+              {margen}%
+            </span>
 
           </div>
 
         </div>
+
+        {/* PRODUCTOS */}
 
         <div className="grid md:grid-cols-2 gap-8 mt-10">
 
           <div>
 
             <h2 className="text-2xl font-bold mb-4">
-              Productos Más Vendidos
+              Más Vendidos
             </h2>
 
             <div className="space-y-3">
@@ -231,19 +341,17 @@ export default async function FinanzasPage() {
                 ) => (
                   <div
                     key={index}
-                    className="bg-zinc-900 p-4 rounded-xl"
+                    className="bg-zinc-900 p-4 rounded-xl flex justify-between"
                   >
-                    <div className="flex justify-between">
+                    <span>
+                      {producto.nombre}
+                    </span>
 
-                      <span>
-                        {producto.nombre}
-                      </span>
-
-                      <span className="text-green-400 font-bold">
-                        {producto.vendidos}
-                      </span>
-
-                    </div>
+                    <span className="text-green-400 font-bold">
+                      {
+                        producto.vendidos
+                      }
+                    </span>
                   </div>
                 )
               )}
@@ -255,7 +363,7 @@ export default async function FinanzasPage() {
           <div>
 
             <h2 className="text-2xl font-bold mb-4">
-              Productos Más Rentables
+              Más Rentables
             </h2>
 
             <div className="space-y-3">
@@ -267,20 +375,18 @@ export default async function FinanzasPage() {
                 ) => (
                   <div
                     key={index}
-                    className="bg-zinc-900 p-4 rounded-xl"
+                    className="bg-zinc-900 p-4 rounded-xl flex justify-between"
                   >
-                    <div className="flex justify-between">
+                    <span>
+                      {producto.nombre}
+                    </span>
 
-                      <span>
-                        {producto.nombre}
-                      </span>
-
-                      <span className="text-blue-400 font-bold">
-                        $
-                        {producto.utilidad.toLocaleString()}
-                      </span>
-
-                    </div>
+                    <span className="text-blue-400 font-bold">
+                      $
+                      {producto.utilidad.toLocaleString(
+                        "es-CO"
+                      )}
+                    </span>
                   </div>
                 )
               )}
@@ -291,7 +397,77 @@ export default async function FinanzasPage() {
 
         </div>
 
+        {/* CUENTAS POR COBRAR */}
+
+        <div className="mt-10">
+
+          <h2 className="text-2xl font-bold mb-4">
+            Créditos Pendientes
+          </h2>
+
+          <div className="space-y-3">
+
+            {cuentas.map(
+              (cuenta) => (
+                <div
+                  key={cuenta.id}
+                  className="bg-zinc-900 p-4 rounded-xl"
+                >
+
+                  <div className="flex justify-between">
+
+                    <div>
+                      <p className="font-bold">
+                        {
+                          cuenta.sale
+                            .customer
+                            .name
+                        }
+                      </p>
+
+                      <p className="text-zinc-400">
+                        Factura:
+                        {" "}
+                        {
+                          cuenta.sale
+                            .invoice
+                        }
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+
+                      <p className="text-orange-400 font-bold">
+                        $
+                        {cuenta.pendingAmount.toLocaleString(
+                          "es-CO"
+                        )}
+                      </p>
+
+                      <p className="text-zinc-400">
+                        {cuenta.dueDate
+                          ? new Date(
+                              cuenta.dueDate
+                            ).toLocaleDateString(
+                              "es-CO"
+                            )
+                          : "Sin fecha"}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              )
+            )}
+
+          </div>
+
+        </div>
+
       </div>
+
     </main>
   );
 }

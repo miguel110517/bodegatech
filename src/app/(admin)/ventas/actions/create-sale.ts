@@ -13,6 +13,25 @@ export async function createSale(formData: FormData) {
 
   const notes = formData.get("notes")?.toString() || "";
 
+  const cashAmount = Number(formData.get("cashAmount") || 0);
+
+  const transferAmount = Number(formData.get("transferAmount") || 0);
+
+  const cardAmount = Number(formData.get("cardAmount") || 0);
+
+  const creditAmount = Number(formData.get("creditAmount") || 0);
+
+  const dueDate = formData.get("dueDate")?.toString() || null;
+
+  if (
+    cashAmount < 0 ||
+    transferAmount < 0 ||
+    cardAmount < 0 ||
+    creditAmount < 0
+  ) {
+    throw new Error("Los montos de pago no pueden ser negativos");
+  }
+
   const productId = formData.getAll("productId") as string[];
 
   const quantity = formData.getAll("quantity") as string[];
@@ -104,35 +123,103 @@ export async function createSale(formData: FormData) {
 
   const total = subtotal - discount;
 
-  await prisma.sale.update({
-    where: {
-      id: sale.id,
-    },
-    data: {
-      subtotal,
-      discount,
-      total,
-      notes,
+  let finalCashAmount = cashAmount;
+  let finalTransferAmount = transferAmount;
+  let finalCardAmount = cardAmount;
+  let finalCreditAmount = creditAmount;
 
-      paymentMethod: paymentMethod as PaymentMethod,
-    },
-  });
+  if (paymentMethod === "CASH") {
+    finalCashAmount = total;
+  }
+
+  if (paymentMethod === "TRANSFER") {
+    finalTransferAmount = total;
+  }
+
+  if (paymentMethod === "CARD") {
+    finalCardAmount = total;
+  }
 
   if (paymentMethod === "CREDIT") {
-    await prisma.accountReceivable.create({
-      data: {
+    finalCreditAmount = total;
+  }
+
+  const totalPagado =
+    finalCashAmount + finalTransferAmount + finalCardAmount + finalCreditAmount;
+
+  if (totalPagado !== total) {
+    for (let i = 0; i < productId.length; i++) {
+      await prisma.product.update({
+        where: {
+          id: productId[i],
+        },
+        data: {
+          stock: {
+            increment: Number(quantity[i]),
+          },
+        },
+      });
+    }
+
+    await prisma.saleItem.deleteMany({
+      where: {
         saleId: sale.id,
-
-        totalAmount: total,
-
-        paidAmount: 0,
-
-        pendingAmount: total,
-
-        status: "PENDING",
       },
     });
+
+    await prisma.sale.delete({
+      where: {
+        id: sale.id,
+      },
+    });
+
+    throw new Error(
+      "La suma de los métodos de pago debe ser igual al total de la venta",
+    );
   }
+
+ await prisma.sale.update({
+  where: {
+    id: sale.id,
+  },
+  data: {
+    subtotal,
+    discount,
+    total,
+    notes,
+
+    paymentMethod: paymentMethod as PaymentMethod,
+
+    cashAmount: finalCashAmount,
+    transferAmount: finalTransferAmount,
+    cardAmount: finalCardAmount,
+    creditAmount: finalCreditAmount,
+  },
+});
+
+if (finalCreditAmount > 0) {
+  if (!dueDate) {
+    throw new Error(
+      "Debe seleccionar una fecha límite para el crédito"
+    );
+  }
+
+  await prisma.accountReceivable.create({
+    data: {
+      saleId: sale.id,
+
+      totalAmount: finalCreditAmount,
+
+      paidAmount: 0,
+
+      pendingAmount: finalCreditAmount,
+
+      dueDate: new Date(dueDate),
+
+      status: "PENDING",
+    },
+  });
+}
 
   revalidatePath("/ventas");
   revalidatePath("/productos");

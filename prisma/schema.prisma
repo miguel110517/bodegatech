@@ -134,8 +134,8 @@ enum PaymentMethod {
   CASH
   TRANSFER
   CARD
-  MIXED
   CREDIT
+  MIXED
 }
 
 model Sale {
@@ -144,16 +144,18 @@ model Sale {
   invoice String @unique
 
   active Boolean @default(true)
-
   deletedAt DateTime?
 
   paymentMethod PaymentMethod @default(CASH)
 
   subtotal Float @default(0)
-
   discount Float @default(0)
-
   total Float @default(0)
+
+  cashAmount Float @default(0)
+  transferAmount Float @default(0)
+  cardAmount Float @default(0)
+  creditAmount Float @default(0)
 
   notes String?
 

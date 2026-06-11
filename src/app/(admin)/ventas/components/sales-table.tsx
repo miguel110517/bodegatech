@@ -27,80 +27,111 @@ export default function SalesTable({ ventas }: Props) {
 
             <th className="p-4 text-center">Fecha</th>
 
-            <th className="p-4 text-center">Acciones</th>
+            <th className="p-4 text-center w-24">
+              Acciones
+            </th>
           </tr>
         </thead>
 
         <tbody>
-          {ventas.map((venta) => {
-            const total = venta.items.reduce(
-              (acum: number, item: any) =>
-                acum + item.quantity * item.salePrice,
-              0,
-            );
+          {ventas.map((venta) => (
+            <tr
+              key={venta.id}
+              className="border-t border-zinc-800 hover:bg-zinc-800/40"
+            >
+              <td className="p-4 whitespace-nowrap font-medium">
+                {venta.invoice || "Sin factura"}
+              </td>
 
-            return (
-              <tr key={venta.id} className="border-t border-zinc-800">
-                <td className="p-4">{venta.invoice || "Sin factura"}</td>
+              <td className="p-4 whitespace-nowrap">
+                {venta.customer.name}
+              </td>
 
-                <td className="p-4">{venta.customer.name}</td>
+              <td className="p-4 text-center">
+                {venta.items.length}
+              </td>
 
-                <td className="p-4 text-center">{venta.items.length}</td>
+              <td className="p-4 text-center">
+                {venta.paymentMethod === "CASH" && "Efectivo"}
+                {venta.paymentMethod === "TRANSFER" && "Transferencia"}
+                {venta.paymentMethod === "CARD" && "Tarjeta"}
+                {venta.paymentMethod === "CREDIT" && "Crédito"}
+                {venta.paymentMethod === "MIXED" && "Mixto"}
+              </td>
 
-                <td className="p-4 text-center">{venta.paymentMethod}</td>
-
-                <td className="p-4 text-center">
-                  {venta.paymentMethod === "CREDIT" ? (
-                    venta.accountsReceivable?.status === "PAID" ? (
-                      <span className="bg-green-600 px-2 py-1 rounded text-xs font-bold">
-                        PAGADA
-                      </span>
-                    ) : (
-                      <span className="bg-yellow-600 px-2 py-1 rounded text-xs font-bold">
-                        PENDIENTE
-                      </span>
-                    )
-                  ) : (
-                    <span className="bg-blue-600 px-2 py-1 rounded text-xs font-bold">
-                      CONTADO
+              <td className="p-4 text-center">
+                {venta.paymentMethod === "CREDIT" ? (
+                  venta.accountsReceivable?.status === "PAID" ? (
+                    <span className="bg-green-600 px-3 py-1 rounded-full text-xs font-bold">
+                      PAGADA
                     </span>
-                  )}
-                </td>
+                  ) : (
+                    <span className="bg-yellow-600 px-3 py-1 rounded-full text-xs font-bold">
+                      PENDIENTE
+                    </span>
+                  )
+                ) : venta.paymentMethod === "MIXED" ? (
+                  venta.creditAmount > 0 ? (
+                    <span className="bg-orange-600 px-3 py-1 rounded-full text-xs font-bold">
+                      PENDIENTE
+                    </span>
+                  ) : (
+                    <span className="bg-cyan-600 px-3 py-1 rounded-full text-xs font-bold">
+                      MIXTO
+                    </span>
+                  )
+                ) : (
+                  <span className="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold">
+                    CONTADO
+                  </span>
+                )}
+              </td>
 
-                <td className="p-4 text-right text-yellow-400 font-bold">
-                  ${venta.discount.toLocaleString("es-CO")}
-                </td>
+              <td className="p-4 text-right text-yellow-400 font-semibold whitespace-nowrap">
+                $
+                {venta.discount.toLocaleString(
+                  "es-CO",
+                )}
+              </td>
 
-                <td className="p-4 text-right text-green-400 font-bold">
-                  ${total.toLocaleString("es-CO")}
-                </td>
+              <td className="p-4 text-right text-green-400 font-bold whitespace-nowrap">
+                $
+                {venta.total.toLocaleString(
+                  "es-CO",
+                )}
+              </td>
 
-                <td className="p-4 text-center">
-                  {new Date(venta.createdAt).toLocaleDateString("es-CO")}
-                </td>
+              <td className="p-4 text-center whitespace-nowrap">
+                {new Date(
+                  venta.createdAt,
+                ).toLocaleDateString("es-CO")}
+              </td>
 
-                <td className="p-4">
-                  <div className="flex justify-center gap-2">
-                    <Link
-                      href={`/ventas/${venta.id}`}
-                      className="bg-yellow-600 px-3 py-2 rounded"
-                    >
-                      Editar
-                    </Link>
+              <td className="p-4">
+                <div className="flex justify-center gap-1">
+                  <Link
+                    href={`/ventas/${venta.id}`}
+                    className="bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded text-sm"
+                    title="Editar"
+                  >
+                    ✏️
+                  </Link>
 
-                    <Link
-                      href={`/ventas/${venta.id}/detalle`}
-                      className="bg-blue-600 px-3 py-2 rounded"
-                    >
-                      Ver
-                    </Link>
+                  <Link
+                    href={`/ventas/${venta.id}/detalle`}
+                    className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-sm"
+                    title="Ver"
+                  >
+                    👁️
+                  </Link>
 
-                    <DeactivateSaleButton saleId={venta.id} />
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+                  <DeactivateSaleButton
+                    saleId={venta.id}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
