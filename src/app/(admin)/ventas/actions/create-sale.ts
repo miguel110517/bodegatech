@@ -62,9 +62,21 @@ export async function createSale(formData: FormData) {
 
   let subtotal = 0;
 
-  const products = [];
+  const products: {
+    product: {
+      id: string;
+      name: string;
+      stock: number;
+      costPrice: number;
+      salePrice: number;
+      offerPrice: number | null;
+    };
+    qty: number;
+    realSalePrice: number;
+  }[] = [];
 
   for (let i = 0; i < productId.length; i++) {
+    
     const qty = Number(quantity[i]);
 
     const product = await prisma.product.findUnique({
