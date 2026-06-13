@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { createCategory } from "./actions/create-category";
 import { deleteCategory } from "./actions/delete-category";
