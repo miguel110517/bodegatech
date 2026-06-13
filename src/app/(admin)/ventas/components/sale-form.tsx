@@ -1,7 +1,7 @@
 "use client";
 
 import { createSale } from "../actions/create-sale";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CustomerPicker from "./customer-picker";
 import ProductPicker from "./product-picker";
 import SaleCart from "./sale-cart";
@@ -57,6 +57,8 @@ export default function SaleForm({ productos, clientes }: Props) {
   const [dueDate, setDueDate] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  const submitting = useRef(false);
 
   function addProduct(product: Product) {
     const exists = cart.find((item) => item.id === product.id);
@@ -187,11 +189,16 @@ export default function SaleForm({ productos, clientes }: Props) {
 
   return (
     <form
-      action={async (formData) => {
-        if (loading) return;
+      onSubmit={(e) => {
+        if (submitting.current) {
+          e.preventDefault();
+          return;
+        }
 
+        submitting.current = true;
         setLoading(true);
-
+      }}
+      action={async (formData) => {
         try {
           await createSale(formData);
 
@@ -201,13 +208,14 @@ export default function SaleForm({ productos, clientes }: Props) {
             window.location.reload();
           }, 1000);
         } catch (error) {
+          submitting.current = false;
+          setLoading(false);
+
           toast.error(
             error instanceof Error
               ? error.message
               : "Error al registrar la venta",
           );
-
-          setLoading(false);
         }
       }}
       className="mb-10"

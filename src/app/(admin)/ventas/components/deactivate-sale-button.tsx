@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Ban } from "lucide-react";
 import { deactivateSale } from "../actions/deactivate-sale";
 
 import {
@@ -41,7 +42,6 @@ export function DeactivateSaleButton({
       setTimeout(() => {
         router.refresh();
       }, 1000);
-
     } catch {
       toast.error(
         "Error al desactivar la venta"
@@ -56,9 +56,10 @@ export function DeactivateSaleButton({
       <AlertDialogTrigger asChild>
         <button
           type="button"
-          className="bg-orange-600 px-3 py-2 rounded"
+          title="Desactivar"
+          className="bg-red-600 hover:bg-red-700 p-2 rounded"
         >
-          Desactivar
+          <Ban size={18} />
         </button>
       </AlertDialogTrigger>
 
@@ -81,7 +82,7 @@ export function DeactivateSaleButton({
 
           <AlertDialogAction
             onClick={handleDeactivate}
-            className="bg-orange-600"
+            className="bg-red-600 hover:bg-red-700"
             disabled={loading}
           >
             {loading

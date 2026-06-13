@@ -17,7 +17,6 @@ export async function deactivateSale(id: string) {
     throw new Error("Venta no encontrada");
   }
 
-  // EVITAR DESACTIVAR DOS VECES
   if (!sale.active) {
     throw new Error("La venta ya está desactivada");
   }
@@ -40,6 +39,17 @@ export async function deactivateSale(id: string) {
   await prisma.sale.update({
     where: {
       id,
+    },
+    data: {
+      active: false,
+      deletedAt: new Date(),
+    },
+  });
+
+  // DESACTIVAR CUENTA POR COBRAR
+  await prisma.accountReceivable.updateMany({
+    where: {
+      saleId: id,
     },
     data: {
       active: false,

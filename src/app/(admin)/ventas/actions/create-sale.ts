@@ -44,8 +44,6 @@ export async function createSale(formData: FormData) {
     throw new Error("Debe agregar al menos un producto");
   }
 
-  // FACTURA AUTOMÁTICA
-
   const lastSale = await prisma.sale.findFirst({
     orderBy: {
       createdAt: "desc",
@@ -62,21 +60,9 @@ export async function createSale(formData: FormData) {
 
   const invoice = `VEN-${String(nextNumber).padStart(6, "0")}`;
 
-  const sale = await prisma.sale.create({
-    data: {
-      invoice,
-      customerId,
-
-      subtotal: 0,
-      discount,
-      total: 0,
-      notes,
-
-      paymentMethod: paymentMethod as PaymentMethod,
-    },
-  });
-
   let subtotal = 0;
+
+  const products = [];
 
   for (let i = 0; i < productId.length; i++) {
     const qty = Number(quantity[i]);
@@ -87,7 +73,9 @@ export async function createSale(formData: FormData) {
       },
     });
 
-    if (!product) continue;
+    if (!product) {
+      throw new Error("Producto no encontrado");
+    }
 
     if (product.stock < qty) {
       throw new Error(`Stock insuficiente para ${product.name}`);
@@ -97,27 +85,10 @@ export async function createSale(formData: FormData) {
 
     subtotal += qty * realSalePrice;
 
-    await prisma.saleItem.create({
-      data: {
-        saleId: sale.id,
-        productId: product.id,
-        quantity: qty,
-
-        costPrice: product.costPrice,
-
-        salePrice: realSalePrice,
-      },
-    });
-
-    await prisma.product.update({
-      where: {
-        id: product.id,
-      },
-      data: {
-        stock: {
-          decrement: qty,
-        },
-      },
+    products.push({
+      product,
+      qty,
+      realSalePrice,
     });
   }
 
@@ -148,79 +119,82 @@ export async function createSale(formData: FormData) {
     finalCashAmount + finalTransferAmount + finalCardAmount + finalCreditAmount;
 
   if (totalPagado !== total) {
-    for (let i = 0; i < productId.length; i++) {
-      await prisma.product.update({
-        where: {
-          id: productId[i],
-        },
-        data: {
-          stock: {
-            increment: Number(quantity[i]),
-          },
-        },
-      });
-    }
-
-    await prisma.saleItem.deleteMany({
-      where: {
-        saleId: sale.id,
-      },
-    });
-
-    await prisma.sale.delete({
-      where: {
-        id: sale.id,
-      },
-    });
-
     throw new Error(
       "La suma de los métodos de pago debe ser igual al total de la venta",
     );
   }
 
- await prisma.sale.update({
-  where: {
-    id: sale.id,
-  },
-  data: {
-    subtotal,
-    discount,
-    total,
-    notes,
-
-    paymentMethod: paymentMethod as PaymentMethod,
-
-    cashAmount: finalCashAmount,
-    transferAmount: finalTransferAmount,
-    cardAmount: finalCardAmount,
-    creditAmount: finalCreditAmount,
-  },
-});
-
-if (finalCreditAmount > 0) {
-  if (!dueDate) {
-    throw new Error(
-      "Debe seleccionar una fecha límite para el crédito"
-    );
+  if (finalCreditAmount > 0 && !dueDate) {
+    throw new Error("Debe seleccionar una fecha límite para el crédito");
   }
 
-  await prisma.accountReceivable.create({
-    data: {
-      saleId: sale.id,
+  await prisma.$transaction(async (tx) => {
+    const sale = await tx.sale.create({
+      data: {
+        invoice,
+        customerId,
 
-      totalAmount: finalCreditAmount,
+        subtotal,
+        discount,
+        total,
 
-      paidAmount: 0,
+        notes,
 
-      pendingAmount: finalCreditAmount,
+        paymentMethod: paymentMethod as PaymentMethod,
 
-      dueDate: new Date(dueDate),
+        cashAmount: finalCashAmount,
+        transferAmount: finalTransferAmount,
+        cardAmount: finalCardAmount,
+        creditAmount: finalCreditAmount,
+      },
+    });
 
-      status: "PENDING",
-    },
+    for (const item of products) {
+      await tx.saleItem.create({
+        data: {
+          saleId: sale.id,
+
+          productId: item.product.id,
+
+          quantity: item.qty,
+
+          costPrice: item.product.costPrice,
+
+          salePrice: item.realSalePrice,
+        },
+      });
+
+      await tx.product.update({
+        where: {
+          id: item.product.id,
+        },
+        data: {
+          stock: {
+            decrement: item.qty,
+          },
+        },
+      });
+    }
+
+    if (finalCreditAmount > 0) {
+      await tx.accountReceivable.create({
+        data: {
+          saleId: sale.id,
+
+          totalAmount: finalCreditAmount,
+
+          paidAmount: 0,
+
+          pendingAmount: finalCreditAmount,
+
+          dueDate: new Date(dueDate!),
+
+          status: "PENDING",
+        },
+      });
+    }
   });
-}
-
   revalidatePath("/ventas");
+  revalidatePath("/cuentas-por-cobrar");
   revalidatePath("/productos");
 }
